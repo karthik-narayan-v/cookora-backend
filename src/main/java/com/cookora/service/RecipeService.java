@@ -2,6 +2,7 @@ package com.cookora.service;
 
 import com.cookora.dto.PagedResponseDTO;
 import com.cookora.dto.RecipeFilterDTO;
+import com.cookora.dto.RecipeRequestDTO;
 import com.cookora.dto.RecipeResponseDTO;
 import com.cookora.entity.Recipe;
 import com.cookora.mapper.RecipeMapper;
@@ -29,8 +30,13 @@ public class RecipeService {
                 .orElseThrow(() -> new RuntimeException("Recipe not found"));
     }
 
-    public Recipe createRecipe(Recipe recipe) {
-        return recipeRepository.save(recipe);
+    public RecipeResponseDTO createRecipe(RecipeRequestDTO dto) {
+
+        Recipe recipe = RecipeMapper.toEntity(dto);
+
+        Recipe saved = recipeRepository.save(recipe);
+
+        return RecipeMapper.toDTO(saved);
     }
 
     public void deleteRecipe(Long id) {

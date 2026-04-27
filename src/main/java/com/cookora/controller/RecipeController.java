@@ -2,6 +2,7 @@ package com.cookora.controller;
 
 import com.cookora.dto.PagedResponseDTO;
 import com.cookora.dto.RecipeFilterDTO;
+import com.cookora.dto.RecipeRequestDTO;
 import com.cookora.dto.RecipeResponseDTO;
 import com.cookora.entity.Recipe;
 import com.cookora.service.RecipeService;
@@ -25,8 +26,8 @@ public class RecipeController {
     }
 
     @PostMapping
-    public Recipe createRecipe(@RequestBody Recipe recipe) {
-        return recipeService.createRecipe(recipe);
+    public RecipeResponseDTO createRecipe(@RequestBody RecipeRequestDTO dto) {
+        return recipeService.createRecipe(dto);
     }
 
     @DeleteMapping("/{id}")
