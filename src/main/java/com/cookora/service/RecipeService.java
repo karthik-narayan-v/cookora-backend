@@ -1,9 +1,13 @@
 package com.cookora.service;
 
+import com.cookora.dto.RecipeFilterDTO;
 import com.cookora.entity.Recipe;
 import com.cookora.repository.RecipeRepository;
+import com.cookora.specification.RecipeSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -13,8 +17,8 @@ public class RecipeService {
 
     private final RecipeRepository recipeRepository;
 
-    public List<Recipe> getAllRecipes() {
-        return recipeRepository.findAll();
+    public Page<Recipe> getAllRecipes(Pageable pageable) {
+        return recipeRepository.findAll(pageable);
     }
 
     public Recipe getRecipeById(Long id) {
@@ -28,5 +32,12 @@ public class RecipeService {
 
     public void deleteRecipe(Long id) {
         recipeRepository.deleteById(id);
+    }
+
+    public Page<Recipe> getFilteredRecipes(RecipeFilterDTO filter, Pageable pageable) {
+        return recipeRepository.findAll(
+                RecipeSpecification.withFilters(filter),
+                pageable
+        );
     }
 }
