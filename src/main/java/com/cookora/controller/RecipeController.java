@@ -1,6 +1,8 @@
 package com.cookora.controller;
 
+import com.cookora.dto.PagedResponseDTO;
 import com.cookora.dto.RecipeFilterDTO;
+import com.cookora.dto.RecipeResponseDTO;
 import com.cookora.entity.Recipe;
 import com.cookora.service.RecipeService;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +35,7 @@ public class RecipeController {
     }
 
     @GetMapping
-    public Page<Recipe> getRecipes(
+    public PagedResponseDTO<List<RecipeResponseDTO>> getRecipes(
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) String cuisine,
             @RequestParam(required = false) Double minRating,

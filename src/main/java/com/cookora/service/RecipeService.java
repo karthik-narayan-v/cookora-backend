@@ -1,7 +1,10 @@
 package com.cookora.service;
 
+import com.cookora.dto.PagedResponseDTO;
 import com.cookora.dto.RecipeFilterDTO;
+import com.cookora.dto.RecipeResponseDTO;
 import com.cookora.entity.Recipe;
+import com.cookora.mapper.RecipeMapper;
 import com.cookora.repository.RecipeRepository;
 import com.cookora.specification.RecipeSpecification;
 import lombok.RequiredArgsConstructor;
@@ -34,10 +37,26 @@ public class RecipeService {
         recipeRepository.deleteById(id);
     }
 
-    public Page<Recipe> getFilteredRecipes(RecipeFilterDTO filter, Pageable pageable) {
-        return recipeRepository.findAll(
+    public PagedResponseDTO<List<RecipeResponseDTO>> getFilteredRecipes(
+            RecipeFilterDTO filter,
+            Pageable pageable
+    ) {
+
+        Page<Recipe> recipes = recipeRepository.findAll(
                 RecipeSpecification.withFilters(filter),
                 pageable
+        );
+
+        List<RecipeResponseDTO> dtoList =
+                recipes.getContent().stream()
+                        .map(RecipeMapper::toDTO)
+                        .toList();
+
+        return new PagedResponseDTO<>(
+                dtoList,
+                recipes.getNumber(),
+                recipes.getSize(),
+                recipes.getTotalElements()
         );
     }
 }
