@@ -2,9 +2,7 @@ package com.cookora.mapper;
 
 import com.cookora.dto.RecipeRequestDTO;
 import com.cookora.dto.RecipeResponseDTO;
-import com.cookora.entity.Ingredient;
-import com.cookora.entity.Instruction;
-import com.cookora.entity.Recipe;
+import com.cookora.entity.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +21,16 @@ public class RecipeMapper {
                 .map(Instruction::getDescription)
                 .toList();
 
+        List<String> tags = recipe.getTags()
+                .stream()
+                .map(Tag::getName)
+                .toList();
+
+        List<String> mealTypes = recipe.getMealTypes()
+                .stream()
+                .map(MealType::getName)
+                .toList();
+
         return RecipeResponseDTO.builder()
                 .id(recipe.getId())
                 .name(recipe.getName())
@@ -35,6 +43,8 @@ public class RecipeMapper {
                 .image(recipe.getImage())
                 .ingredients(ingredients)
                 .instructions(instructions)
+                .tags(tags)
+                .mealType(mealTypes)
                 .build();
     }
 
@@ -51,7 +61,6 @@ public class RecipeMapper {
                 .image(dto.getImage())
                 .build();
 
-        // Ingredients
         List<Ingredient> ingredients = dto.getIngredients().stream()
                 .map(name -> Ingredient.builder()
                         .name(name)
@@ -59,7 +68,6 @@ public class RecipeMapper {
                         .build())
                 .toList();
 
-        // Instructions
         List<Instruction> instructions = new ArrayList<>();
         for (int i = 0; i < dto.getInstructions().size(); i++) {
             instructions.add(

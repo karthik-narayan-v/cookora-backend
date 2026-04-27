@@ -44,4 +44,20 @@ public class Recipe {
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Instruction> instructions;
+
+    @ManyToMany
+    @JoinTable(
+            name = "recipe_tags",
+            joinColumns = @JoinColumn(name = "recipe_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private List<Tag> tags;
+
+    @ManyToMany
+    @JoinTable(
+            name = "recipe_meal_types",
+            joinColumns = @JoinColumn(name = "recipe_id"),
+            inverseJoinColumns = @JoinColumn(name = "meal_type_id")
+    )
+    private List<MealType> mealTypes;
 }

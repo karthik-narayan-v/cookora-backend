@@ -24,4 +24,6 @@ public class RecipeResponseDTO {
     private String image;
     private List<String> ingredients;
     private List<String> instructions;
+    private List<String> tags;
+    private List<String> mealType;
 }
