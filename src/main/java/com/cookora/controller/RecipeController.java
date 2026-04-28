@@ -63,4 +63,12 @@ public class RecipeController {
         favoriteService.markFavorite(id, userId, request.getLiked());
     }
 
+    @GetMapping("/search")
+    public PagedResponseDTO<List<RecipeResponseDTO>> searchRecipes(
+            @RequestParam String query,
+            Pageable pageable
+    ) {
+        return recipeService.searchRecipes(query, pageable);
+    }
+
 }

@@ -95,4 +95,29 @@ public class RecipeService {
                 recipes.getTotalElements()
         );
     }
+
+    public PagedResponseDTO<List<RecipeResponseDTO>> searchRecipes(
+            String query,
+            Pageable pageable
+    ) {
+
+        if (query == null || query.trim().isEmpty()) {
+            return getFilteredRecipes(new RecipeFilterDTO(), pageable);
+        }
+
+        Page<Recipe> recipes =
+                recipeRepository.searchRecipes(query, pageable);
+
+        List<RecipeResponseDTO> dtoList =
+                recipes.getContent().stream()
+                        .map(RecipeMapper::toDTO)
+                        .toList();
+
+        return new PagedResponseDTO<>(
+                dtoList,
+                recipes.getNumber(),
+                recipes.getSize(),
+                recipes.getTotalElements()
+        );
+    }
 }
