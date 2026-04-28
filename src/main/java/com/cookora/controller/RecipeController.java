@@ -1,10 +1,8 @@
 package com.cookora.controller;
 
-import com.cookora.dto.PagedResponseDTO;
-import com.cookora.dto.RecipeFilterDTO;
-import com.cookora.dto.RecipeRequestDTO;
-import com.cookora.dto.RecipeResponseDTO;
+import com.cookora.dto.*;
 import com.cookora.entity.Recipe;
+import com.cookora.service.FavoriteService;
 import com.cookora.service.RecipeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +17,7 @@ import java.util.List;
 public class RecipeController {
 
     private final RecipeService recipeService;
+    private final FavoriteService favoriteService;
 
     @GetMapping("/{id}")
     public Recipe getRecipe(@PathVariable Long id) {
@@ -54,4 +53,14 @@ public class RecipeController {
 
         return recipeService.getFilteredRecipes(filter, pageable);
     }
+
+    @PostMapping("/{id}/favorite")
+    public void markFavorite(
+            @PathVariable Long id,
+            @RequestParam Long userId,
+            @RequestBody FavoriteRequestDTO request
+    ) {
+        favoriteService.markFavorite(id, userId, request.getLiked());
+    }
+
 }
