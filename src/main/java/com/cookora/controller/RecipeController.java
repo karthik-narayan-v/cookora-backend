@@ -5,11 +5,15 @@ import com.cookora.entity.Recipe;
 import com.cookora.service.FavoriteService;
 import com.cookora.service.RecipeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+
+import static com.cookora.util.RecipeSortUtil.isValidSortField;
 
 @RestController
 @RequestMapping("/recipes")
@@ -41,8 +45,24 @@ public class RecipeController {
             @RequestParam(required = false) Double minRating,
             @RequestParam(required = false) Integer minCalories,
             @RequestParam(required = false) Integer maxCalories,
+            @RequestParam(required = false, defaultValue = "rating") String sortBy,
+            @RequestParam(required = false, defaultValue = "desc") String direction,
             Pageable pageable
     ) {
+
+        if (!isValidSortField(sortBy)) {
+            throw new RuntimeException("Invalid sort field");
+        }
+
+        Sort sort = direction.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                sort
+        );
 
         RecipeFilterDTO filter = new RecipeFilterDTO();
         filter.setDifficulty(difficulty);
@@ -51,9 +71,8 @@ public class RecipeController {
         filter.setMinCalories(minCalories);
         filter.setMaxCalories(maxCalories);
 
-        return recipeService.getFilteredRecipes(filter, pageable);
+        return recipeService.getFilteredRecipes(filter, sortedPageable);
     }
-
     @PostMapping("/{id}/favorite")
     public void markFavorite(
             @PathVariable Long id,
