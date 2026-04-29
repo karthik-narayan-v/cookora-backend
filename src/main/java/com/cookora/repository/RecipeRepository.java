@@ -22,4 +22,12 @@ public interface RecipeRepository extends
        OR LOWER(t.name) LIKE LOWER(CONCAT('%', :query, '%'))
 """)
     Page<Recipe> searchRecipes(@Param("query") String query, Pageable pageable);
+
+    @Query("""
+SELECT r FROM Recipe r
+LEFT JOIN Favorite f ON f.recipe = r AND f.liked = true
+GROUP BY r
+ORDER BY (r.rating * r.reviewCount * 0.5 + COUNT(f) * 1.5) DESC
+""")
+    Page<Recipe> findTrendingRecipes(Pageable pageable);
 }

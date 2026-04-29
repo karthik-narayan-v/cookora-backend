@@ -90,4 +90,9 @@ public class RecipeController {
         return recipeService.searchRecipes(query, pageable);
     }
 
+    @GetMapping("/trending")
+    public PagedResponseDTO<List<RecipeResponseDTO>> getTrendingRecipes(Pageable pageable) {
+        return recipeService.getTrendingRecipes(pageable);
+    }
+
 }

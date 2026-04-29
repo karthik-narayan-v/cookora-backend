@@ -120,4 +120,21 @@ public class RecipeService {
                 recipes.getTotalElements()
         );
     }
+
+    public PagedResponseDTO<List<RecipeResponseDTO>> getTrendingRecipes(Pageable pageable) {
+
+        Page<Recipe> recipes = recipeRepository.findTrendingRecipes(pageable);
+
+        List<RecipeResponseDTO> dtoList =
+                recipes.getContent().stream()
+                        .map(RecipeMapper::toDTO)
+                        .toList();
+
+        return new PagedResponseDTO<>(
+                dtoList,
+                recipes.getNumber(),
+                recipes.getSize(),
+                recipes.getTotalElements()
+        );
+    }
 }
