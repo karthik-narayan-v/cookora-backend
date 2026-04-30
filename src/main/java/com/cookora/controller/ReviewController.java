@@ -19,7 +19,7 @@ public class ReviewController {
     @PostMapping("/{id}/review")
     public void addReview(
             @PathVariable Long id,
-            @RequestParam Long userId,
+            @RequestParam String userId,
             @RequestBody ReviewRequestDTO request
     ) {
         reviewService.addOrUpdateReview(id, userId, request);

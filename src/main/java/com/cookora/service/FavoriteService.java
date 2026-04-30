@@ -8,6 +8,8 @@ import com.cookora.repository.FavoriteRepository;
 import com.cookora.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,7 +26,10 @@ public class FavoriteService {
     @Autowired
     private RecipeRepository recipeRepository;
 
-    public void markFavorite(Long recipeId, Long userId, Boolean liked) {
+    public void markFavorite(Long recipeId, Boolean liked) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String userId = auth.getName();
 
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new RuntimeException("Recipe not found"));
@@ -48,7 +53,7 @@ public class FavoriteService {
         }
     }
 
-    public List<RecipeResponseDTO> getUserFavorites(Long userId) {
+    public List<RecipeResponseDTO> getUserFavorites(String userId) {
 
         List<Favorite> favorites =
                 favoriteRepository.findByUserIdAndLikedTrue(userId);

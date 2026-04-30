@@ -4,10 +4,12 @@ import com.cookora.dto.PagedResponseDTO;
 import com.cookora.dto.RecipeFilterDTO;
 import com.cookora.dto.RecipeRequestDTO;
 import com.cookora.dto.RecipeResponseDTO;
+import com.cookora.entity.Favorite;
 import com.cookora.entity.MealType;
 import com.cookora.entity.Recipe;
 import com.cookora.entity.Tag;
 import com.cookora.mapper.RecipeMapper;
+import com.cookora.repository.FavoriteRepository;
 import com.cookora.repository.MealTypeRepository;
 import com.cookora.repository.RecipeRepository;
 import com.cookora.repository.TagRepository;
@@ -17,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
@@ -31,6 +35,9 @@ public class RecipeService {
 
     @Autowired
     private MealTypeRepository mealTypeRepository;
+
+    @Autowired
+    private FavoriteRepository favoriteRepository;
 
     public Page<Recipe> getAllRecipes(Pageable pageable) {
         return recipeRepository.findAll(pageable);
@@ -124,6 +131,41 @@ public class RecipeService {
     public PagedResponseDTO<List<RecipeResponseDTO>> getTrendingRecipes(Pageable pageable) {
 
         Page<Recipe> recipes = recipeRepository.findTrendingRecipes(pageable);
+
+        List<RecipeResponseDTO> dtoList =
+                recipes.getContent().stream()
+                        .map(RecipeMapper::toDTO)
+                        .toList();
+
+        return new PagedResponseDTO<>(
+                dtoList,
+                recipes.getNumber(),
+                recipes.getSize(),
+                recipes.getTotalElements()
+        );
+    }
+
+    public PagedResponseDTO<List<RecipeResponseDTO>> getRecommendations(
+            Pageable pageable
+    ) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String userId = auth.getName();
+
+        List<Favorite> favorites =
+                favoriteRepository.findByUserIdAndLikedTrue(userId);
+
+        List<String> cuisines = favorites.stream()
+                .map(f -> f.getRecipe().getCuisine())
+                .distinct()
+                .toList();
+
+        if (cuisines.isEmpty()) {
+            return getTrendingRecipes(pageable);
+        }
+
+        Page<Recipe> recipes =
+                recipeRepository.findRecommendedRecipes(cuisines, pageable);
 
         List<RecipeResponseDTO> dtoList =
                 recipes.getContent().stream()

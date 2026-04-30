@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 public class ReviewResponseDTO {
 
-    private Long userId;
+    private String userId;
     private int rating;
     private String comment;
 }

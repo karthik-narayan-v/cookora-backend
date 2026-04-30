@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
-    Optional<Favorite> findByUserIdAndRecipe(Long userId, Recipe recipe);
+    Optional<Favorite> findByUserIdAndRecipe(String userId, Recipe recipe);
 
-    List<Favorite> findByUserIdAndLikedTrue(Long userId);
+    List<Favorite> findByUserIdAndLikedTrue(String userId);
 }

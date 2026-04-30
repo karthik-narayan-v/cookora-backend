@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
+
 @Repository
 public interface RecipeRepository extends
         JpaRepository<Recipe, Long>,
@@ -30,4 +32,14 @@ GROUP BY r
 ORDER BY (r.rating * r.reviewCount * 0.5 + COUNT(f) * 1.5) DESC
 """)
     Page<Recipe> findTrendingRecipes(Pageable pageable);
+
+    @Query("""
+SELECT DISTINCT r FROM Recipe r
+WHERE r.cuisine IN :cuisines
+ORDER BY r.rating DESC
+""")
+    Page<Recipe> findRecommendedRecipes(
+            @Param("cuisines") List<String> cuisines,
+            Pageable pageable
+    );
 }

@@ -21,7 +21,7 @@ public class ReviewService {
     private final RecipeRepository recipeRepository;
 
     // ⭐ Add or Update Review
-    public void addOrUpdateReview(Long recipeId, Long userId, ReviewRequestDTO dto) {
+    public void addOrUpdateReview(Long recipeId, String userId, ReviewRequestDTO dto) {
 
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new RuntimeException("Recipe not found"));

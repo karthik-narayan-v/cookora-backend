@@ -18,7 +18,7 @@ public class UserController {
     private final FavoriteService favoriteService;
 
     @GetMapping("/{userId}/favorites")
-    public List<RecipeResponseDTO> getFavorites(@PathVariable Long userId) {
+    public List<RecipeResponseDTO> getFavorites(@PathVariable String userId) {
         return favoriteService.getUserFavorites(userId);
     }
 }

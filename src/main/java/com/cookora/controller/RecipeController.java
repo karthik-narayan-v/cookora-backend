@@ -24,7 +24,7 @@ public class RecipeController {
     private final FavoriteService favoriteService;
 
     @GetMapping("/{id}")
-    public Recipe getRecipe(@PathVariable Long id) {
+    public Recipe  getRecipe(@PathVariable Long id) {
         return recipeService.getRecipeById(id);
     }
 
@@ -76,10 +76,9 @@ public class RecipeController {
     @PostMapping("/{id}/favorite")
     public void markFavorite(
             @PathVariable Long id,
-            @RequestParam Long userId,
             @RequestBody FavoriteRequestDTO request
     ) {
-        favoriteService.markFavorite(id, userId, request.getLiked());
+        favoriteService.markFavorite(id, request.getLiked());
     }
 
     @GetMapping("/search")
@@ -93,6 +92,13 @@ public class RecipeController {
     @GetMapping("/trending")
     public PagedResponseDTO<List<RecipeResponseDTO>> getTrendingRecipes(Pageable pageable) {
         return recipeService.getTrendingRecipes(pageable);
+    }
+
+    @GetMapping("/recommendations")
+    public PagedResponseDTO<List<RecipeResponseDTO>> getRecommendations(
+            Pageable pageable
+    ) {
+        return recipeService.getRecommendations(pageable);
     }
 
 }
