@@ -98,9 +98,11 @@ public class RecipeController {
     @GetMapping("/search")
     public PagedResponseDTO<List<RecipeResponseDTO>> searchRecipes(
             @RequestParam String query,
+            @RequestParam(defaultValue = "rating") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction,
             Pageable pageable
     ) {
-        return recipeService.searchRecipes(query, pageable);
+        return recipeService.searchRecipes(query, sortBy, direction, pageable);
     }
 
     // ⭐ Trending

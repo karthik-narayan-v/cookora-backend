@@ -50,15 +50,21 @@ public class ReviewService {
     }
 
     // ⭐ Get Reviews for a Recipe
-    public List<ReviewResponseDTO> getReviews(Long recipeId) {
+    public List<ReviewResponseDTO> getReviews(Long recipeId, String sortBy) {
 
-        // validate recipe existence
         if (!recipeRepository.existsById(recipeId)) {
             throw new ResourceNotFoundException("Recipe not found");
         }
 
-        return reviewRepository.findByRecipeId(recipeId)
-                .stream()
+        List<Review> reviews;
+
+        if (sortBy.equalsIgnoreCase("rating")) {
+            reviews = reviewRepository.findByRecipeIdOrderByRatingDesc(recipeId);
+        } else {
+            reviews = reviewRepository.findByRecipeIdOrderByCreatedAtDesc(recipeId);
+        }
+
+        return reviews.stream()
                 .map(ReviewMapper::toDTO)
                 .toList();
     }

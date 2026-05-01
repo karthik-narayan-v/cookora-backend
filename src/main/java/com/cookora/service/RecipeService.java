@@ -5,13 +5,17 @@ import com.cookora.dto.RecipeFilterDTO;
 import com.cookora.dto.RecipeRequestDTO;
 import com.cookora.dto.RecipeResponseDTO;
 import com.cookora.entity.*;
+import com.cookora.exception.BadRequestException;
 import com.cookora.exception.ResourceNotFoundException;
 import com.cookora.exception.UnauthorizedException;
 import com.cookora.mapper.RecipeMapper;
 import com.cookora.repository.*;
 import com.cookora.specification.RecipeSpecification;
 import com.cookora.util.AuthUtil;
+import com.cookora.util.RecipeSortUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -101,14 +105,32 @@ public class RecipeService {
     // ⭐ Search Recipes
     public PagedResponseDTO<List<RecipeResponseDTO>> searchRecipes(
             String query,
+            String sortBy,
+            String direction,
             Pageable pageable
     ) {
 
-        if (query == null || query.trim().isEmpty()) {
-            return getFilteredRecipes(new RecipeFilterDTO(), pageable);
+        if (!RecipeSortUtil.isValidSortField(sortBy)) {
+            throw new BadRequestException("Invalid sort field");
         }
 
-        Page<Recipe> recipes = recipeRepository.searchRecipes(query, pageable);
+        Sort sort = direction.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                sort
+        );
+
+        Page<Recipe> recipes;
+
+        if (query == null || query.trim().isEmpty()) {
+            recipes = recipeRepository.findAll(sortedPageable);
+        } else {
+            recipes = recipeRepository.searchRecipes(query, sortedPageable);
+        }
 
         return mapToPagedResponse(recipes);
     }

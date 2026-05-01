@@ -29,8 +29,9 @@ public class ReviewController {
     // ⭐ Get Reviews
     @GetMapping("/{id}/reviews")
     public List<ReviewResponseDTO> getReviews(
-            @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long id
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "latest") String sortBy
     ) {
-        return reviewService.getReviews(id);
+        return reviewService.getReviews(id, sortBy);
     }
 }
