@@ -26,31 +26,45 @@ public class RecipeController {
 
     // ⭐ Get Recipe
     @GetMapping("/{id}")
-    public RecipeResponseDTO getRecipe(
+    public ApiResponse<RecipeResponseDTO> getRecipe(
             @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long id
     ) {
-        return recipeService.getRecipeById(id);
+        return ApiResponse.<RecipeResponseDTO>builder()
+                .success(true)
+                .message("Recipe fetched successfully")
+                .data(recipeService.getRecipeById(id))
+                .build();
     }
 
     // ⭐ Create Recipe
     @PostMapping
-    public RecipeResponseDTO createRecipe(
+    public ApiResponse<RecipeResponseDTO> createRecipe(
             @Valid @RequestBody RecipeRequestDTO dto
     ) {
-        return recipeService.createRecipe(dto);
+        return ApiResponse.<RecipeResponseDTO>builder()
+                .success(true)
+                .message("Recipe created successfully")
+                .data(recipeService.createRecipe(dto))
+                .build();
     }
 
     // ⭐ Delete Recipe
     @DeleteMapping("/{id}")
-    public void deleteRecipe(
+    public ApiResponse<String> deleteRecipe(
             @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long id
     ) {
         recipeService.deleteRecipe(id);
+
+        return ApiResponse.<String>builder()
+                .success(true)
+                .message("Recipe deleted successfully")
+                .data(null)
+                .build();
     }
 
     // ⭐ Get Recipes (Filter + Sort + Pagination)
     @GetMapping
-    public PagedResponseDTO<List<RecipeResponseDTO>> getRecipes(
+    public ApiResponse<PagedResponseDTO<List<RecipeResponseDTO>>> getRecipes(
             @RequestParam(required = false) String difficulty,
             @RequestParam(required = false) String cuisine,
             @RequestParam(required = false) Double minRating,
@@ -82,42 +96,64 @@ public class RecipeController {
         filter.setMinCalories(minCalories);
         filter.setMaxCalories(maxCalories);
 
-        return recipeService.getFilteredRecipes(filter, sortedPageable);
+        return ApiResponse.<PagedResponseDTO<List<RecipeResponseDTO>>>builder()
+                .success(true)
+                .message("Recipes fetched successfully")
+                .data(recipeService.getFilteredRecipes(filter, sortedPageable))
+                .build();
     }
 
     // ⭐ Favorite / Unfavorite
     @PostMapping("/{id}/favorite")
-    public void markFavorite(
+    public ApiResponse<String> markFavorite(
             @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long id,
             @Valid @RequestBody FavoriteRequestDTO request
     ) {
         favoriteService.markFavorite(id, request.getLiked());
+
+        return ApiResponse.<String>builder()
+                .success(true)
+                .message("Favorite updated successfully")
+                .data(null)
+                .build();
     }
 
     // ⭐ Search
     @GetMapping("/search")
-    public PagedResponseDTO<List<RecipeResponseDTO>> searchRecipes(
+    public ApiResponse<PagedResponseDTO<List<RecipeResponseDTO>>> searchRecipes(
             @RequestParam String query,
             @RequestParam(defaultValue = "rating") String sortBy,
             @RequestParam(defaultValue = "desc") String direction,
             Pageable pageable
     ) {
-        return recipeService.searchRecipes(query, sortBy, direction, pageable);
+        return ApiResponse.<PagedResponseDTO<List<RecipeResponseDTO>>>builder()
+                .success(true)
+                .message("Search results fetched successfully")
+                .data(recipeService.searchRecipes(query, sortBy, direction, pageable))
+                .build();
     }
 
     // ⭐ Trending
     @GetMapping("/trending")
-    public PagedResponseDTO<List<RecipeResponseDTO>> getTrendingRecipes(
+    public ApiResponse<PagedResponseDTO<List<RecipeResponseDTO>>> getTrendingRecipes(
             Pageable pageable
     ) {
-        return recipeService.getTrendingRecipes(pageable);
+        return ApiResponse.<PagedResponseDTO<List<RecipeResponseDTO>>>builder()
+                .success(true)
+                .message("Trending recipes fetched successfully")
+                .data(recipeService.getTrendingRecipes(pageable))
+                .build();
     }
 
     // ⭐ Recommendations
     @GetMapping("/recommendations")
-    public PagedResponseDTO<List<RecipeResponseDTO>> getRecommendations(
+    public ApiResponse<PagedResponseDTO<List<RecipeResponseDTO>>> getRecommendations(
             Pageable pageable
     ) {
-        return recipeService.getRecommendations(pageable);
+        return ApiResponse.<PagedResponseDTO<List<RecipeResponseDTO>>>builder()
+                .success(true)
+                .message("Recommendations fetched successfully")
+                .data(recipeService.getRecommendations(pageable))
+                .build();
     }
 }

@@ -1,5 +1,6 @@
 package com.cookora.controller;
 
+import com.cookora.dto.ApiResponse;
 import com.cookora.dto.RecipeResponseDTO;
 import com.cookora.service.FavoriteService;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +15,12 @@ public class UserController {
 
     private final FavoriteService favoriteService;
 
-    // ⭐ Get logged-in user's favorites
     @GetMapping("/favorites")
-    public List<RecipeResponseDTO> getFavorites() {
-        return favoriteService.getUserFavorites();
+    public ApiResponse<List<RecipeResponseDTO>> getFavorites() {
+        return ApiResponse.<List<RecipeResponseDTO>>builder()
+                .success(true)
+                .message("Favorites fetched successfully")
+                .data(favoriteService.getUserFavorites())
+                .build();
     }
 }

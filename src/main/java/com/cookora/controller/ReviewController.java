@@ -1,5 +1,6 @@
 package com.cookora.controller;
 
+import com.cookora.dto.ApiResponse;
 import com.cookora.dto.ReviewRequestDTO;
 import com.cookora.dto.ReviewResponseDTO;
 import com.cookora.service.ReviewService;
@@ -17,21 +18,29 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    // ⭐ Add / Update Review
     @PostMapping("/{id}/review")
-    public void addReview(
-            @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long id,
+    public ApiResponse<String> addReview(
+            @PathVariable @Min(1) Long id,
             @Valid @RequestBody ReviewRequestDTO request
     ) {
         reviewService.addOrUpdateReview(id, request);
+
+        return ApiResponse.<String>builder()
+                .success(true)
+                .message("Review added/updated successfully")
+                .data(null)
+                .build();
     }
 
-    // ⭐ Get Reviews
     @GetMapping("/{id}/reviews")
-    public List<ReviewResponseDTO> getReviews(
+    public ApiResponse<List<ReviewResponseDTO>> getReviews(
             @PathVariable Long id,
             @RequestParam(defaultValue = "latest") String sortBy
     ) {
-        return reviewService.getReviews(id, sortBy);
+        return ApiResponse.<List<ReviewResponseDTO>>builder()
+                .success(true)
+                .message("Reviews fetched successfully")
+                .data(reviewService.getReviews(id, sortBy))
+                .build();
     }
 }

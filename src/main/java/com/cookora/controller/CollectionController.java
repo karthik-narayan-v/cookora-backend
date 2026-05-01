@@ -1,5 +1,6 @@
 package com.cookora.controller;
 
+import com.cookora.dto.ApiResponse;
 import com.cookora.dto.CollectionRequestDTO;
 import com.cookora.dto.CollectionResponseDTO;
 import com.cookora.service.CollectionService;
@@ -17,34 +18,51 @@ public class CollectionController {
 
     private final CollectionService collectionService;
 
-    // ⭐ Create Collection
     @PostMapping
-    public CollectionResponseDTO create(
+    public ApiResponse<CollectionResponseDTO> create(
             @Valid @RequestBody CollectionRequestDTO request
     ) {
-        return collectionService.createCollection(request.getName());
+        return ApiResponse.<CollectionResponseDTO>builder()
+                .success(true)
+                .message("Collection created successfully")
+                .data(collectionService.createCollection(request.getName()))
+                .build();
     }
 
-    // ⭐ Get All Collections (for logged-in user)
     @GetMapping
-    public List<CollectionResponseDTO> getAll() {
-        return collectionService.getUserCollections();
+    public ApiResponse<List<CollectionResponseDTO>> getAll() {
+        return ApiResponse.<List<CollectionResponseDTO>>builder()
+                .success(true)
+                .message("Collections fetched successfully")
+                .data(collectionService.getUserCollections())
+                .build();
     }
 
     @PostMapping("/{id}/recipes/{recipeId}")
-    public void addRecipe(
-            @PathVariable @Min(value = 1, message = "Collection ID must be valid") Long id,
-            @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long recipeId
+    public ApiResponse<String> addRecipe(
+            @PathVariable @Min(1) Long id,
+            @PathVariable @Min(1) Long recipeId
     ) {
         collectionService.addRecipe(id, recipeId);
+
+        return ApiResponse.<String>builder()
+                .success(true)
+                .message("Recipe added to collection")
+                .data(null)
+                .build();
     }
 
-    // ⭐ Remove recipe from collection
     @DeleteMapping("/{id}/recipes/{recipeId}")
-    public void removeRecipe(
-            @PathVariable @Min(value = 1, message = "Collection ID must be valid") Long id,
-            @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long recipeId
+    public ApiResponse<String> removeRecipe(
+            @PathVariable @Min(1) Long id,
+            @PathVariable @Min(1) Long recipeId
     ) {
         collectionService.removeRecipe(id, recipeId);
+
+        return ApiResponse.<String>builder()
+                .success(true)
+                .message("Recipe removed from collection")
+                .data(null)
+                .build();
     }
 }

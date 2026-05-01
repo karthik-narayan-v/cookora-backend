@@ -1,6 +1,6 @@
 package com.cookora.exception;
 
-import com.cookora.dto.ErrorResponse;
+import com.cookora.dto.ApiResponse;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,56 +10,45 @@ import org.springframework.web.bind.annotation.*;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 🔥 404
+    // 🔥 404 - Resource Not Found
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                ErrorResponse.builder()
+                ApiResponse.builder()
                         .success(false)
                         .message(ex.getMessage())
-                        .errorCode("NOT_FOUND")
+                        .data(null)
                         .build()
         );
     }
 
-    // 🔥 400
+    // 🔥 400 - Bad Request
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(BadRequestException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                ErrorResponse.builder()
+                ApiResponse.builder()
                         .success(false)
                         .message(ex.getMessage())
-                        .errorCode("BAD_REQUEST")
+                        .data(null)
                         .build()
         );
     }
 
-    // 🔥 401
+    // 🔥 401 - Unauthorized
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleUnauthorized(UnauthorizedException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                ErrorResponse.builder()
+                ApiResponse.builder()
                         .success(false)
                         .message(ex.getMessage())
-                        .errorCode("UNAUTHORIZED")
+                        .data(null)
                         .build()
         );
     }
 
-    // 🔥 fallback (VERY IMPORTANT)
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ErrorResponse.builder()
-                        .success(false)
-                        .message("Something went wrong")
-                        .errorCode("INTERNAL_SERVER_ERROR")
-                        .build()
-        );
-    }
-
+    // 🔥 Validation Errors
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleValidation(MethodArgumentNotValidException ex) {
 
         String message = ex.getBindingResult()
                 .getFieldErrors()
@@ -69,10 +58,22 @@ public class GlobalExceptionHandler {
                 .orElse("Validation failed");
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                ErrorResponse.builder()
+                ApiResponse.builder()
                         .success(false)
                         .message(message)
-                        .errorCode("VALIDATION_ERROR")
+                        .data(null)
+                        .build()
+        );
+    }
+
+    // 🔥 Generic Exception (Fallback)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Object>> handleGeneric(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse.builder()
+                        .success(false)
+                        .message("Something went wrong")
+                        .data(null)
                         .build()
         );
     }
