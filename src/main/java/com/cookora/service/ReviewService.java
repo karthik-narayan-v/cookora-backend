@@ -4,10 +4,12 @@ import com.cookora.dto.ReviewRequestDTO;
 import com.cookora.dto.ReviewResponseDTO;
 import com.cookora.entity.Recipe;
 import com.cookora.entity.Review;
+import com.cookora.exception.ResourceNotFoundException;
 import com.cookora.mapper.ReviewMapper;
 import com.cookora.repository.RecipeRepository;
 import com.cookora.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,10 +23,14 @@ public class ReviewService {
     private final RecipeRepository recipeRepository;
 
     // ⭐ Add or Update Review
-    public void addOrUpdateReview(Long recipeId, String userId, ReviewRequestDTO dto) {
+    public void addOrUpdateReview(Long recipeId, ReviewRequestDTO dto) {
+
+        String userId = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
 
         Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
 
         Review review = reviewRepository
                 .findByUserIdAndRecipe(userId, recipe)

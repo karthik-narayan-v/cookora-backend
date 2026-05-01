@@ -8,6 +8,7 @@ import com.cookora.entity.Favorite;
 import com.cookora.entity.MealType;
 import com.cookora.entity.Recipe;
 import com.cookora.entity.Tag;
+import com.cookora.exception.ResourceNotFoundException;
 import com.cookora.mapper.RecipeMapper;
 import com.cookora.repository.FavoriteRepository;
 import com.cookora.repository.MealTypeRepository;
@@ -43,9 +44,12 @@ public class RecipeService {
         return recipeRepository.findAll(pageable);
     }
 
-    public Recipe getRecipeById(Long id) {
-        return recipeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+    public RecipeResponseDTO getRecipeById(Long id) {
+
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+
+        return RecipeMapper.toDTO(recipe);
     }
 
     public RecipeResponseDTO createRecipe(RecipeRequestDTO dto) {

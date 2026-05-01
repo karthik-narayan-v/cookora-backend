@@ -3,6 +3,7 @@ package com.cookora.service;
 import com.cookora.dto.CollectionResponseDTO;
 import com.cookora.entity.Collection;
 import com.cookora.entity.Recipe;
+import com.cookora.exception.ResourceNotFoundException;
 import com.cookora.mapper.CollectionMapper;
 import com.cookora.repository.CollectionRepository;
 import com.cookora.repository.RecipeRepository;
@@ -61,10 +62,10 @@ public class CollectionService {
 
         Collection collection = collectionRepository
                 .findByIdAndUserId(collectionId, userId)
-                .orElseThrow(() -> new RuntimeException("Collection not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Collection not found"));
 
         Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
 
         if (!collection.getRecipes().contains(recipe)) {
             collection.getRecipes().add(recipe);
@@ -80,7 +81,7 @@ public class CollectionService {
 
         Collection collection = collectionRepository
                 .findByIdAndUserId(collectionId, userId)
-                .orElseThrow(() -> new RuntimeException("Collection not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Collection not found"));
 
         collection.getRecipes()
                 .removeIf(r -> r.getId().equals(recipeId));

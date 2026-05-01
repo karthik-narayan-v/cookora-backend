@@ -1,5 +1,6 @@
 package com.cookora.dto;
 
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,6 +8,10 @@ import lombok.Setter;
 @Setter
 public class ReviewRequestDTO {
 
-    private int rating; // 1–5
+    @Min(value = 1, message = "Rating must be at least 1")
+    @Max(value = 5, message = "Rating cannot exceed 5")
+    private int rating;
+
+    @Size(max = 500, message = "Comment cannot exceed 500 characters")
     private String comment;
 }

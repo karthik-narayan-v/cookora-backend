@@ -3,6 +3,7 @@ package com.cookora.service;
 import com.cookora.dto.RecipeResponseDTO;
 import com.cookora.entity.Favorite;
 import com.cookora.entity.Recipe;
+import com.cookora.exception.ResourceNotFoundException;
 import com.cookora.mapper.RecipeMapper;
 import com.cookora.repository.FavoriteRepository;
 import com.cookora.repository.RecipeRepository;
@@ -32,7 +33,7 @@ public class FavoriteService {
         String userId = auth.getName();
 
         Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new RuntimeException("Recipe not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
 
         Optional<Favorite> existing =
                 favoriteRepository.findByUserIdAndRecipe(userId, recipe);
@@ -53,7 +54,11 @@ public class FavoriteService {
         }
     }
 
-    public List<RecipeResponseDTO> getUserFavorites(String userId) {
+    public List<RecipeResponseDTO> getUserFavorites() {
+
+        String userId = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
 
         List<Favorite> favorites =
                 favoriteRepository.findByUserIdAndLikedTrue(userId);

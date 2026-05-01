@@ -3,6 +3,8 @@ package com.cookora.controller;
 import com.cookora.dto.ReviewRequestDTO;
 import com.cookora.dto.ReviewResponseDTO;
 import com.cookora.service.ReviewService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,16 +20,17 @@ public class ReviewController {
     // ⭐ Add / Update Review
     @PostMapping("/{id}/review")
     public void addReview(
-            @PathVariable Long id,
-            @RequestParam String userId,
-            @RequestBody ReviewRequestDTO request
+            @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long id,
+            @Valid @RequestBody ReviewRequestDTO request
     ) {
-        reviewService.addOrUpdateReview(id, userId, request);
+        reviewService.addOrUpdateReview(id, request);
     }
 
     // ⭐ Get Reviews
     @GetMapping("/{id}/reviews")
-    public List<ReviewResponseDTO> getReviews(@PathVariable Long id) {
+    public List<ReviewResponseDTO> getReviews(
+            @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long id
+    ) {
         return reviewService.getReviews(id);
     }
 }

@@ -1,14 +1,15 @@
 package com.cookora.controller;
 
 import com.cookora.dto.*;
-import com.cookora.entity.Recipe;
+import com.cookora.exception.BadRequestException;
 import com.cookora.service.FavoriteService;
 import com.cookora.service.RecipeService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -23,21 +24,31 @@ public class RecipeController {
     private final RecipeService recipeService;
     private final FavoriteService favoriteService;
 
+    // ⭐ Get Recipe
     @GetMapping("/{id}")
-    public Recipe  getRecipe(@PathVariable Long id) {
+    public RecipeResponseDTO getRecipe(
+            @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long id
+    ) {
         return recipeService.getRecipeById(id);
     }
 
+    // ⭐ Create Recipe
     @PostMapping
-    public RecipeResponseDTO createRecipe(@RequestBody RecipeRequestDTO dto) {
+    public RecipeResponseDTO createRecipe(
+            @Valid @RequestBody RecipeRequestDTO dto
+    ) {
         return recipeService.createRecipe(dto);
     }
 
+    // ⭐ Delete Recipe
     @DeleteMapping("/{id}")
-    public void deleteRecipe(@PathVariable Long id) {
+    public void deleteRecipe(
+            @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long id
+    ) {
         recipeService.deleteRecipe(id);
     }
 
+    // ⭐ Get Recipes (Filter + Sort + Pagination)
     @GetMapping
     public PagedResponseDTO<List<RecipeResponseDTO>> getRecipes(
             @RequestParam(required = false) String difficulty,
@@ -51,7 +62,7 @@ public class RecipeController {
     ) {
 
         if (!isValidSortField(sortBy)) {
-            throw new RuntimeException("Invalid sort field");
+            throw new BadRequestException("Invalid sort field");
         }
 
         Sort sort = direction.equalsIgnoreCase("asc")
@@ -73,14 +84,17 @@ public class RecipeController {
 
         return recipeService.getFilteredRecipes(filter, sortedPageable);
     }
+
+    // ⭐ Favorite / Unfavorite
     @PostMapping("/{id}/favorite")
     public void markFavorite(
-            @PathVariable Long id,
-            @RequestBody FavoriteRequestDTO request
+            @PathVariable @Min(value = 1, message = "Recipe ID must be valid") Long id,
+            @Valid @RequestBody FavoriteRequestDTO request
     ) {
         favoriteService.markFavorite(id, request.getLiked());
     }
 
+    // ⭐ Search
     @GetMapping("/search")
     public PagedResponseDTO<List<RecipeResponseDTO>> searchRecipes(
             @RequestParam String query,
@@ -89,16 +103,19 @@ public class RecipeController {
         return recipeService.searchRecipes(query, pageable);
     }
 
+    // ⭐ Trending
     @GetMapping("/trending")
-    public PagedResponseDTO<List<RecipeResponseDTO>> getTrendingRecipes(Pageable pageable) {
+    public PagedResponseDTO<List<RecipeResponseDTO>> getTrendingRecipes(
+            Pageable pageable
+    ) {
         return recipeService.getTrendingRecipes(pageable);
     }
 
+    // ⭐ Recommendations
     @GetMapping("/recommendations")
     public PagedResponseDTO<List<RecipeResponseDTO>> getRecommendations(
             Pageable pageable
     ) {
         return recipeService.getRecommendations(pageable);
     }
-
 }

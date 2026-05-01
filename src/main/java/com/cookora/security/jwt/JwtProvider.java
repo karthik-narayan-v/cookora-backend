@@ -1,5 +1,6 @@
 package com.cookora.security.jwt;
 
+import com.cookora.exception.UnauthorizedException;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -53,7 +54,7 @@ public class JwtProvider {
                     .getPayload()
                     .getSubject();
         } catch (Exception e) {
-            throw new RuntimeException("Invalid JWT", e);
+            throw new UnauthorizedException("Invalid JWT");
         }
     }
 
