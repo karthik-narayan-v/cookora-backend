@@ -8,9 +8,10 @@ import com.cookora.exception.ResourceNotFoundException;
 import com.cookora.mapper.ReviewMapper;
 import com.cookora.repository.RecipeRepository;
 import com.cookora.repository.ReviewRepository;
+import com.cookora.util.AuthUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,40 +24,38 @@ public class ReviewService {
     private final RecipeRepository recipeRepository;
 
     // ⭐ Add or Update Review
+    @Transactional
     public void addOrUpdateReview(Long recipeId, ReviewRequestDTO dto) {
 
-        String userId = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
+        String userId = AuthUtil.getUserId();
 
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
 
         Review review = reviewRepository
                 .findByUserIdAndRecipe(userId, recipe)
-                .orElse(null);
+                .orElseGet(() -> Review.builder()
+                        .userId(userId)
+                        .recipe(recipe)
+                        .createdAt(LocalDateTime.now())
+                        .build()
+                );
 
-        if (review != null) {
-            review.setRating(dto.getRating());
-            review.setComment(dto.getComment());
-        } else {
-            review = Review.builder()
-                    .userId(userId)
-                    .recipe(recipe)
-                    .rating(dto.getRating())
-                    .comment(dto.getComment())
-                    .createdAt(LocalDateTime.now())
-                    .build();
-        }
+        review.setRating(dto.getRating());
+        review.setComment(dto.getComment());
 
         reviewRepository.save(review);
 
-        // 🔥 update rating after save
         updateRecipeRating(recipe);
     }
 
     // ⭐ Get Reviews for a Recipe
     public List<ReviewResponseDTO> getReviews(Long recipeId) {
+
+        // validate recipe existence
+        if (!recipeRepository.existsById(recipeId)) {
+            throw new ResourceNotFoundException("Recipe not found");
+        }
 
         return reviewRepository.findByRecipeId(recipeId)
                 .stream()

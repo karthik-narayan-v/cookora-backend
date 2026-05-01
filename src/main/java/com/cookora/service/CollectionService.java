@@ -7,9 +7,10 @@ import com.cookora.exception.ResourceNotFoundException;
 import com.cookora.mapper.CollectionMapper;
 import com.cookora.repository.CollectionRepository;
 import com.cookora.repository.RecipeRepository;
+import com.cookora.util.AuthUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,17 +22,10 @@ public class CollectionService {
     private final CollectionRepository collectionRepository;
     private final RecipeRepository recipeRepository;
 
-    // 🔐 get userId from JWT
-    private String getUserId() {
-        return SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-    }
-
     // ⭐ Create Collection
     public CollectionResponseDTO createCollection(String name) {
 
-        String userId = getUserId();
+        String userId = AuthUtil.getUserId();
 
         Collection collection = Collection.builder()
                 .userId(userId)
@@ -47,7 +41,7 @@ public class CollectionService {
     // ⭐ Get All Collections
     public List<CollectionResponseDTO> getUserCollections() {
 
-        String userId = getUserId();
+        String userId = AuthUtil.getUserId();
 
         return collectionRepository.findByUserId(userId)
                 .stream()
@@ -56,9 +50,10 @@ public class CollectionService {
     }
 
     // ⭐ Add Recipe to Collection
+    @Transactional
     public void addRecipe(Long collectionId, Long recipeId) {
 
-        String userId = getUserId();
+        String userId = AuthUtil.getUserId();
 
         Collection collection = collectionRepository
                 .findByIdAndUserId(collectionId, userId)
@@ -70,14 +65,13 @@ public class CollectionService {
         if (!collection.getRecipes().contains(recipe)) {
             collection.getRecipes().add(recipe);
         }
-
-        collectionRepository.save(collection);
     }
 
     // ⭐ Remove Recipe
+    @Transactional
     public void removeRecipe(Long collectionId, Long recipeId) {
 
-        String userId = getUserId();
+        String userId = AuthUtil.getUserId();
 
         Collection collection = collectionRepository
                 .findByIdAndUserId(collectionId, userId)

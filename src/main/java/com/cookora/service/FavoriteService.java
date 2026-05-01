@@ -7,63 +7,51 @@ import com.cookora.exception.ResourceNotFoundException;
 import com.cookora.mapper.RecipeMapper;
 import com.cookora.repository.FavoriteRepository;
 import com.cookora.repository.RecipeRepository;
+import com.cookora.util.AuthUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class FavoriteService {
 
-    @Autowired
-    private FavoriteRepository favoriteRepository;
+    private final FavoriteRepository favoriteRepository;
+    private final RecipeRepository recipeRepository;
 
-    @Autowired
-    private RecipeRepository recipeRepository;
-
+    // ⭐ Add / Update Favorite
+    @Transactional
     public void markFavorite(Long recipeId, Boolean liked) {
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String userId = auth.getName();
+        String userId = AuthUtil.getUserId();
 
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
 
-        Optional<Favorite> existing =
-                favoriteRepository.findByUserIdAndRecipe(userId, recipe);
+        Favorite favorite = favoriteRepository
+                .findByUserIdAndRecipe(userId, recipe)
+                .orElseGet(() -> Favorite.builder()
+                        .userId(userId)
+                        .recipe(recipe)
+                        .createdAt(LocalDateTime.now())
+                        .build()
+                );
 
-        if (existing.isPresent()) {
-            Favorite fav = existing.get();
-            fav.setLiked(liked);
-            favoriteRepository.save(fav);
-        } else {
-            Favorite fav = Favorite.builder()
-                    .userId(userId)
-                    .recipe(recipe)
-                    .liked(liked)
-                    .createdAt(LocalDateTime.now())
-                    .build();
+        favorite.setLiked(liked);
 
-            favoriteRepository.save(fav);
-        }
+        favoriteRepository.save(favorite);
     }
 
+    // ⭐ Get Logged-in User Favorites
     public List<RecipeResponseDTO> getUserFavorites() {
 
-        String userId = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
+        String userId = AuthUtil.getUserId();
 
-        List<Favorite> favorites =
-                favoriteRepository.findByUserIdAndLikedTrue(userId);
-
-        return favorites.stream()
+        return favoriteRepository.findByUserIdAndLikedTrue(userId)
+                .stream()
                 .map(fav -> RecipeMapper.toDTO(fav.getRecipe()))
                 .toList();
     }

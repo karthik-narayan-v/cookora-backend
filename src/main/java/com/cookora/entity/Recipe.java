@@ -35,7 +35,8 @@ public class Recipe {
 
     private int reviewCount;
 
-    private Long createdBy;
+    @Column(name = "created_by", nullable = false)
+    private String createdBy;
 
     private String image;
 

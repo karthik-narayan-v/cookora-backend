@@ -4,24 +4,18 @@ import com.cookora.dto.PagedResponseDTO;
 import com.cookora.dto.RecipeFilterDTO;
 import com.cookora.dto.RecipeRequestDTO;
 import com.cookora.dto.RecipeResponseDTO;
-import com.cookora.entity.Favorite;
-import com.cookora.entity.MealType;
-import com.cookora.entity.Recipe;
-import com.cookora.entity.Tag;
+import com.cookora.entity.*;
 import com.cookora.exception.ResourceNotFoundException;
+import com.cookora.exception.UnauthorizedException;
 import com.cookora.mapper.RecipeMapper;
-import com.cookora.repository.FavoriteRepository;
-import com.cookora.repository.MealTypeRepository;
-import com.cookora.repository.RecipeRepository;
-import com.cookora.repository.TagRepository;
+import com.cookora.repository.*;
 import com.cookora.specification.RecipeSpecification;
+import com.cookora.util.AuthUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
@@ -30,33 +24,25 @@ import java.util.List;
 public class RecipeService {
 
     private final RecipeRepository recipeRepository;
+    private final TagRepository tagRepository;
+    private final MealTypeRepository mealTypeRepository;
+    private final FavoriteRepository favoriteRepository;
 
-    @Autowired
-    private TagRepository tagRepository;
-
-    @Autowired
-    private MealTypeRepository mealTypeRepository;
-
-    @Autowired
-    private FavoriteRepository favoriteRepository;
-
-    public Page<Recipe> getAllRecipes(Pageable pageable) {
-        return recipeRepository.findAll(pageable);
-    }
-
+    // ⭐ Get Recipe
     public RecipeResponseDTO getRecipeById(Long id) {
-
-        Recipe recipe = recipeRepository.findById(id)
+        return recipeRepository.findById(id)
+                .map(RecipeMapper::toDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
-
-        return RecipeMapper.toDTO(recipe);
     }
 
+    // ⭐ Create Recipe
+    @Transactional
     public RecipeResponseDTO createRecipe(RecipeRequestDTO dto) {
 
-        Recipe recipe = RecipeMapper.toEntity(dto);
+        String userId = AuthUtil.getUserId();
 
-        Recipe saved = recipeRepository.save(recipe);
+        Recipe recipe = RecipeMapper.toEntity(dto);
+        recipe.setCreatedBy(userId);// 🔐 ownership
 
         // Tags
         List<Tag> tags = dto.getTags().stream()
@@ -77,13 +63,28 @@ public class RecipeService {
         recipe.setTags(tags);
         recipe.setMealTypes(mealTypes);
 
+        Recipe saved = recipeRepository.save(recipe);
+
         return RecipeMapper.toDTO(saved);
     }
 
-    public void deleteRecipe(Long id) {
-        recipeRepository.deleteById(id);
+    // ⭐ Delete Recipe
+    @Transactional
+    public void deleteRecipe(Long recipeId) {
+
+        String userId = AuthUtil.getUserId();
+
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+
+        if (!recipe.getCreatedBy().equals(userId)) {
+            throw new UnauthorizedException("You cannot delete this recipe");
+        }
+
+        recipeRepository.delete(recipe);
     }
 
+    // ⭐ Filter Recipes
     public PagedResponseDTO<List<RecipeResponseDTO>> getFilteredRecipes(
             RecipeFilterDTO filter,
             Pageable pageable
@@ -94,19 +95,10 @@ public class RecipeService {
                 pageable
         );
 
-        List<RecipeResponseDTO> dtoList =
-                recipes.getContent().stream()
-                        .map(RecipeMapper::toDTO)
-                        .toList();
-
-        return new PagedResponseDTO<>(
-                dtoList,
-                recipes.getNumber(),
-                recipes.getSize(),
-                recipes.getTotalElements()
-        );
+        return mapToPagedResponse(recipes);
     }
 
+    // ⭐ Search Recipes
     public PagedResponseDTO<List<RecipeResponseDTO>> searchRecipes(
             String query,
             Pageable pageable
@@ -116,45 +108,25 @@ public class RecipeService {
             return getFilteredRecipes(new RecipeFilterDTO(), pageable);
         }
 
-        Page<Recipe> recipes =
-                recipeRepository.searchRecipes(query, pageable);
+        Page<Recipe> recipes = recipeRepository.searchRecipes(query, pageable);
 
-        List<RecipeResponseDTO> dtoList =
-                recipes.getContent().stream()
-                        .map(RecipeMapper::toDTO)
-                        .toList();
-
-        return new PagedResponseDTO<>(
-                dtoList,
-                recipes.getNumber(),
-                recipes.getSize(),
-                recipes.getTotalElements()
-        );
+        return mapToPagedResponse(recipes);
     }
 
+    // ⭐ Trending
     public PagedResponseDTO<List<RecipeResponseDTO>> getTrendingRecipes(Pageable pageable) {
 
         Page<Recipe> recipes = recipeRepository.findTrendingRecipes(pageable);
 
-        List<RecipeResponseDTO> dtoList =
-                recipes.getContent().stream()
-                        .map(RecipeMapper::toDTO)
-                        .toList();
-
-        return new PagedResponseDTO<>(
-                dtoList,
-                recipes.getNumber(),
-                recipes.getSize(),
-                recipes.getTotalElements()
-        );
+        return mapToPagedResponse(recipes);
     }
 
+    // ⭐ Recommendations
     public PagedResponseDTO<List<RecipeResponseDTO>> getRecommendations(
             Pageable pageable
     ) {
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String userId = auth.getName();
+        String userId = AuthUtil.getUserId();
 
         List<Favorite> favorites =
                 favoriteRepository.findByUserIdAndLikedTrue(userId);
@@ -170,6 +142,12 @@ public class RecipeService {
 
         Page<Recipe> recipes =
                 recipeRepository.findRecommendedRecipes(cuisines, pageable);
+
+        return mapToPagedResponse(recipes);
+    }
+
+    // ⭐ Common Mapper
+    private PagedResponseDTO<List<RecipeResponseDTO>> mapToPagedResponse(Page<Recipe> recipes) {
 
         List<RecipeResponseDTO> dtoList =
                 recipes.getContent().stream()
