@@ -16,13 +16,37 @@ public interface RecipeRepository extends
         JpaRepository<Recipe, Long>,
         JpaSpecificationExecutor<Recipe> {
 
-    @Query("""
-    SELECT DISTINCT r FROM Recipe r
-    LEFT JOIN r.tags t
-    WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :query, '%'))
-       OR LOWER(r.cuisine) LIKE LOWER(CONCAT('%', :query, '%'))
-       OR LOWER(t.name) LIKE LOWER(CONCAT('%', :query, '%'))
-""")
+    @Query(value = """
+SELECT DISTINCT r.* FROM recipe r
+LEFT JOIN recipe_tags rt ON r.id = rt.recipe_id
+LEFT JOIN tag t ON rt.tag_id = t.id
+WHERE to_tsvector('english',
+        COALESCE(r.name, '') || ' ' ||
+        COALESCE(r.cuisine, '') || ' ' ||
+        COALESCE(t.name, '')
+      )
+@@ websearch_to_tsquery('english', :query)
+ORDER BY ts_rank(
+        to_tsvector('english',
+            COALESCE(r.name, '') || ' ' ||
+            COALESCE(r.cuisine, '') || ' ' ||
+            COALESCE(t.name, '')
+        ),
+        websearch_to_tsquery('english', :query)
+) DESC
+""",
+            countQuery = """
+SELECT COUNT(DISTINCT r.id) FROM recipe r
+LEFT JOIN recipe_tags rt ON r.id = rt.recipe_id
+LEFT JOIN tag t ON rt.tag_id = t.id
+WHERE to_tsvector('english',
+        COALESCE(r.name, '') || ' ' ||
+        COALESCE(r.cuisine, '') || ' ' ||
+        COALESCE(t.name, '')
+      )
+@@ websearch_to_tsquery('english', :query)
+""",
+            nativeQuery = true)
     Page<Recipe> searchRecipes(@Param("query") String query, Pageable pageable);
 
     @Query("""
@@ -40,6 +64,38 @@ ORDER BY r.rating DESC
 """)
     Page<Recipe> findRecommendedRecipes(
             @Param("cuisines") List<String> cuisines,
+            Pageable pageable
+    );
+
+    @Query("""
+SELECT DISTINCT r FROM Recipe r
+JOIN r.tags t
+WHERE r.cuisine IN :cuisines
+   OR t.name IN :tags
+   OR r.caloriesPerServing BETWEEN :minCal AND :maxCal
+ORDER BY r.rating DESC
+""")
+    Page<Recipe> findAdvancedRecommendations(
+            List<String> cuisines,
+            List<String> tags,
+            int minCal,
+            int maxCal,
+            Pageable pageable
+    );
+
+    @Query("""
+SELECT r FROM Recipe r
+JOIN Favorite f ON f.recipe = r
+WHERE f.userId IN (
+    SELECT f2.userId FROM Favorite f2
+    WHERE f2.recipe.id IN :favoriteRecipeIds
+    AND f2.liked = true
+)
+AND r.id NOT IN :favoriteRecipeIds
+ORDER BY r.rating DESC
+""")
+    Page<Recipe> findCollaborativeRecommendations(
+            List<Long> favoriteRecipeIds,
             Pageable pageable
     );
 }

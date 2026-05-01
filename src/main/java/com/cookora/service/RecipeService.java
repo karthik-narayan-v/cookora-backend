@@ -153,21 +153,81 @@ public class RecipeService {
         List<Favorite> favorites =
                 favoriteRepository.findByUserIdAndLikedTrue(userId);
 
+        // 🔴 Step 1: Cold start → fallback
+        if (favorites.isEmpty()) {
+            return getTrendingRecipes(pageable);
+        }
+
+        // 🟢 Step 2: Extract signals
+
         List<String> cuisines = favorites.stream()
                 .map(f -> f.getRecipe().getCuisine())
                 .distinct()
                 .toList();
 
-        if (cuisines.isEmpty()) {
+        List<String> tags = favorites.stream()
+                .flatMap(f -> f.getRecipe().getTags().stream())
+                .map(Tag::getName)
+                .distinct()
+                .toList();
+
+        int avgCalories = (int) favorites.stream()
+                .mapToInt(f -> f.getRecipe().getCaloriesPerServing())
+                .average()
+                .orElse(300);
+
+        int minCal = avgCalories - 100;
+        int maxCal = avgCalories + 100;
+
+        List<Long> favoriteRecipeIds = favorites.stream()
+                .map(f -> f.getRecipe().getId())
+                .toList();
+
+        // 🔵 Step 3: Get BOTH recommendation types
+
+        Page<Recipe> advancedPage =
+                recipeRepository.findAdvancedRecommendations(
+                        cuisines, tags, minCal, maxCal, pageable
+                );
+
+        Page<Recipe> collaborativePage =
+                recipeRepository.findCollaborativeRecommendations(
+                        favoriteRecipeIds, pageable
+                );
+
+        // 🟡 Step 4: Merge results (IMPORTANT)
+
+        List<Recipe> merged = new java.util.ArrayList<>();
+
+        merged.addAll(collaborativePage.getContent());
+        merged.addAll(advancedPage.getContent());
+
+        // remove duplicates
+        List<Recipe> unique = merged.stream()
+                .distinct()
+                .toList();
+
+        // fallback if still empty
+        if (unique.isEmpty()) {
             return getTrendingRecipes(pageable);
         }
 
-        Page<Recipe> recipes =
-                recipeRepository.findRecommendedRecipes(cuisines, pageable);
+        // ⚠️ manual pagination (simple approach)
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), unique.size());
 
-        return mapToPagedResponse(recipes);
+        List<RecipeResponseDTO> dtoList = unique.subList(start, end)
+                .stream()
+                .map(RecipeMapper::toDTO)
+                .toList();
+
+        return new PagedResponseDTO<>(
+                dtoList,
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                unique.size()
+        );
     }
-
     // ⭐ Common Mapper
     private PagedResponseDTO<List<RecipeResponseDTO>> mapToPagedResponse(Page<Recipe> recipes) {
 
